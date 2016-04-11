@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/jessevdk/go-flags"
 	dashboard "github.com/jrab89/ec2_events_dashboard"
@@ -25,11 +27,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	instances, err := dashboard.InstancesWithEvents(ec2Clients...)
-	if err != nil {
-		// TODO: print out some error message
-		os.Exit(1)
-	}
+	http.Handle("/", http.FileServer(http.Dir("./frontend")))
+	http.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
+		instances, err := dashboard.InstancesWithEvents(ec2Clients...)
+		if err != nil {
+			// TODO: print out some error message
+			os.Exit(1)
+		}
 
-	fmt.Println(len(instances))
+		// TODO: probably should 500 if this errors?
+		marshalled, _ := json.MarshalIndent(instances, "", "    ")
+		fmt.Fprintf(w, string(marshalled))
+	})
+	http.ListenAndServe(":3000", nil)
 }

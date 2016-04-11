@@ -1,22 +1,12 @@
 package ec2_events_dashboard
 
-import (
-	"encoding/json"
-
-	"github.com/aws/aws-sdk-go/service/ec2"
-)
+import "github.com/aws/aws-sdk-go/service/ec2"
 
 // Instance represents an EC2 instance
 type Instance struct {
 	Client   *ec2.EC2 `json:"-"`
 	Status   *ec2.InstanceStatus
 	Instance *ec2.Instance
-}
-
-// ToJSON returns a JSON representation of an Instance
-func (i *Instance) ToJSON() (string, error) {
-	marshalled, err := json.MarshalIndent(i, "", "    ")
-	return string(marshalled), err
 }
 
 // InstancesWithEvents returns a []*instance which are instances in regions of the specified []*ec2.EC2 with any scheduled events
