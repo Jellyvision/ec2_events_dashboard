@@ -4,9 +4,9 @@ import "github.com/aws/aws-sdk-go/service/ec2"
 
 // Instance represents an EC2 instance
 type Instance struct {
-	Client      *ec2.EC2
-	Status      *ec2.InstanceStatus
-	Reservation *ec2.Reservation // TODO: change this to *ec2.Instance
+	Client   *ec2.EC2
+	Status   *ec2.InstanceStatus
+	Instance *ec2.Instance
 }
 
 // InstancesWithEvents returns a []*instance which are instances in regions of the specified []*ec2.EC2 with any scheduled events
@@ -36,36 +36,33 @@ func instancesWithEvents(client *ec2.EC2) ([]*Instance, error) {
 		return nil, err
 	}
 
-	instanceIdsWithEvents := []*string{}
-	instanceStatusesWithEvents := []*ec2.InstanceStatus{}
+	instanceChan := make(chan *Instance)
+	instancesCount := 0
+
+	// TODO: This makes one http request for getting instances statuses, then one request per instace with events
+	// it would be possible to just make one request with a slice of instance IDs, but would need to sort a []*ec2.Instance
 	statuses := describeStatusesResponse.InstanceStatuses
 	for _, status := range statuses {
 		if len(status.Events) != 0 {
-			instanceIdsWithEvents = append(instanceIdsWithEvents, status.InstanceId)
-			instanceStatusesWithEvents = append(instanceStatusesWithEvents, status)
+			instancesCount++
+
+			go func(s *ec2.InstanceStatus) {
+				instanceID := s.InstanceId
+				describeInstancesOutput, _ := client.DescribeInstances(
+					&ec2.DescribeInstancesInput{
+						InstanceIds: []*string{instanceID},
+					},
+				)
+
+				instanceChan <- &Instance{Client: client, Status: s, Instance: describeInstancesOutput.Reservations[0].Instances[0]}
+			}(status)
 		}
 	}
 
-	describeInstancesOutput, err := client.DescribeInstances(
-		&ec2.DescribeInstancesInput{
-			InstanceIds: instanceIdsWithEvents,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return newInstances(client, instanceStatusesWithEvents, describeInstancesOutput.Reservations), nil
-}
-
-func newInstances(client *ec2.EC2, statuses []*ec2.InstanceStatus, reservations []*ec2.Reservation) []*Instance {
 	instances := []*Instance{}
-	for i := 0; i < len(statuses); i++ {
-		instances = append(instances, &Instance{Client: client, Status: statuses[i], Reservation: reservations[i]})
+	for i := 0; i < instancesCount; i++ {
+		instances = append(instances, <-instanceChan)
 	}
-	return instances
-}
 
-func newInstance(client *ec2.EC2, status *ec2.InstanceStatus, reservation *ec2.Reservation) *Instance {
-	return &Instance{Client: client, Status: status, Reservation: reservation}
+	return instances, nil
 }
