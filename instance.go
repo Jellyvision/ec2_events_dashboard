@@ -47,10 +47,9 @@ func instancesWithEvents(client *ec2.EC2) ([]*Instance, error) {
 			instancesCount++
 
 			go func(s *ec2.InstanceStatus) {
-				instanceID := s.InstanceId
 				describeInstancesOutput, _ := client.DescribeInstances(
 					&ec2.DescribeInstancesInput{
-						InstanceIds: []*string{instanceID},
+						InstanceIds: []*string{s.InstanceId},
 					},
 				)
 
