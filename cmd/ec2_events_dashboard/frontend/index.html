@@ -18,17 +18,65 @@
             <th>Instance ID</th>
             <th>Name</th>
             <th>AZ</th>
-            <th>Owner ID</th>
             <th>State</th>
             <th>Instance Type</th>
-            <th>Launched</th>
+            <th>Launched At</th>
             <th>Event Type</th>
-            <th>Not Before</th>
+            <th>Event At</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="instancesTableBody">
         </tbody>
       </table>
     </div>
+
+    <script>
+     var instancesTableBody = $('#instancesTableBody');
+
+     function getName(instance) {
+       var nameTag = instance.Instance.Tags.find(function(tag){
+         return tag.Key === "Name";
+       });
+
+       return nameTag ? nameTag.Value : "";
+     }
+
+     function updateInstancesTable() {
+       $.getJSON( "/instances", function(response) {
+
+         instances = response;
+
+         var rows = instances.map(function(instance) {
+           return {
+             id: instance.Instance.InstanceId,
+             name: getName(instance),
+             az: instance.Status.AvailabilityZone,
+             state: instance.Instance.State.Name,
+             type: instance.Instance.InstanceType,
+             launched: instance.Instance.LaunchTime,
+             eventType: instance.Status.Events[0].Code,
+             notBefore: instance.Status.Events[0].NotBefore
+           }
+         });
+
+         var trs = rows.map(function(row){
+           return $("<tr>").
+             append($("<td>").html(row.id)).
+             append($("<td>").html(row.name)).
+             append($("<td>").html(row.az)).
+             append($("<td>").html(row.state)).
+             append($("<td>").html(row.type)).
+             append($("<td>").html(row.launched)).
+             append($("<td>").html(row.eventType)).
+             append($("<td>").html(row.notBefore));
+         });
+
+         instancesTableBody.html(trs);
+       });
+     }
+
+     updateInstancesTable();
+     setInterval(updateInstancesTable, 1000 * 30);
+    </script>
   </body>
 </html>
