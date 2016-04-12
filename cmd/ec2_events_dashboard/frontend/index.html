@@ -31,10 +31,8 @@
     </div>
 
     <script>
-     var instancesTableBody = $('#instancesTableBody');
-
      function getName(instance) {
-       var nameTag = instance.Instance.Tags.find(function(tag){
+       var nameTag = instance.Instance.Tags.find(function(tag) {
          return tag.Key === "Name";
        });
 
@@ -42,10 +40,7 @@
      }
 
      function updateInstancesTable() {
-       $.getJSON( "/instances", function(response) {
-
-         instances = response;
-
+       $.getJSON("/instances", function(instances) {
          var rows = instances.map(function(instance) {
            return {
              id: instance.Instance.InstanceId,
@@ -59,7 +54,7 @@
            }
          });
 
-         var trs = rows.map(function(row){
+         var trs = rows.map(function(row) {
            return $("<tr>").
              append($("<td>").html(row.id)).
              append($("<td>").html(row.name)).
@@ -71,7 +66,7 @@
              append($("<td>").html(row.notBefore));
          });
 
-         instancesTableBody.html(trs);
+         $("#instancesTableBody").html(trs);
        });
      }
 
