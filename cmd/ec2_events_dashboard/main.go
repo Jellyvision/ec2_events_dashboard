@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	ec2_events_dashboard "../.."
 	"github.com/jessevdk/go-flags"
-	dashboard "github.com/jrab89/ec2_events_dashboard"
 
 	"os"
 )
@@ -21,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ec2Clients, err := dashboard.NewClientsFromCreds(opts.Creds)
+	ec2Clients, err := ec2_events_dashboard.NewClientsFromCreds(opts.Creds)
 	if err != nil {
 		// TODO: print out some error message
 		os.Exit(1)
@@ -29,7 +29,7 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	http.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
-		instances, err := dashboard.InstancesWithEvents(ec2Clients...)
+		instances, err := ec2_events_dashboard.InstancesWithEvents(ec2Clients...)
 		if err != nil {
 			// TODO: print out some error message
 			os.Exit(1)
