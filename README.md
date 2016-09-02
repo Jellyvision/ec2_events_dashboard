@@ -17,4 +17,4 @@ This example shows using 3 different AWS accounts, but you can use as many or as
 
 Then go to `http://localhost:3000` in your browser and you'll see something like this:
 
-![dashboard screenshot](https://github.com/Jellyvision/ec2_events_dashboard/blog/master/screenshot.png)
+![dashboard screenshot](https://github.com/Jellyvision/ec2_events_dashboard/blob/master/screenshot.png)
